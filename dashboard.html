@@ -442,7 +442,7 @@
       <div>
         <div class="brand-title">ESP32 Presence Pad</div>
         <div class="brand-sub">
-          Live phone-on-pad & motion (1 min window)
+          Live phone-on-pad & motion (10 sec window)
         </div>
       </div>
     </div>
@@ -465,7 +465,7 @@
 
     <!-- Motion card -->
     <div class="card" id="motionCard">
-      <div class="card-title">🚶 Motion (PIR, last 1 minute)</div>
+      <div class="card-title">🚶 Motion (PIR, last 10 seconds)</div>
       <div id="motionMain" class="status-main">Loading…</div>
       <div id="motionSub" class="status-sub"></div>
       <div id="motionPill" class="pill pill-neutral">
@@ -563,21 +563,21 @@
     const elapsedSeconds = Math.floor((Date.now() - motionCycleStartTime) / 1000);
     const motionCycleValue = ((elapsedSeconds) % 10) + 1;
     
-    if (motionAgo <= 60) {
+    if (motionAgo <= 10) {
       motionMain.textContent = "Recent motion detected";
       motionSub.textContent =
         "Last motion " + motionCycleValue + " seconds ago.";
       motionPill.className = "pill pill-ok";
       motionPill.innerHTML =
-        '<span class="dot dot-ok"></span> Active (<= 1 min)';
+        '<span class="dot dot-ok"></span> Active (<= 10 sec)';
       motionCard.className = "card card-ok";
     } else {
-      motionMain.textContent = "No motion in last 1 minute";
+      motionMain.textContent = "No motion in last 10 seconds";
       motionSub.textContent =
         "Last motion " + motionCycleValue + " seconds ago.";
       motionPill.className = "pill pill-bad";
       motionPill.innerHTML =
-        '<span class="dot dot-bad"></span> Inactive (> 1 min)';
+        '<span class="dot dot-bad"></span> Inactive (> 10 sec)';
       motionCard.className = "card card-bad";
     }
   }

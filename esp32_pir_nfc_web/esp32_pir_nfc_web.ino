@@ -25,7 +25,7 @@ unsigned long lastNfcDetectedMs = 0;  // Track when NFC tag was last successfull
 const unsigned long NFC_TIMEOUT_MS = 5000;  // 5 seconds - if no detection for this long, consider removed
 
 unsigned long lastMotionMs = 0;
-const unsigned long MOTION_WINDOW_MS = 60000;   // 1 minute
+const unsigned long MOTION_WINDOW_MS = 10000;   // 10 seconds
 
 bool nfcInitialized = false;  // Track if PN532 was successfully initialized
 
