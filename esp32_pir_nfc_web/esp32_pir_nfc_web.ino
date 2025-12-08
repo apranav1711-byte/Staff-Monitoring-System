@@ -151,6 +151,7 @@ void loop() {
 
   // ---------- A) PIR MOTION (independent) ----------
   static bool lastPirState = LOW;
+  static unsigned long lastMotionStatusPrint = 0;
   bool pirState = digitalRead(PIR_PIN);
 
   if (pirState == HIGH) {
@@ -166,6 +167,25 @@ void loop() {
     Serial.println("PIR: Motion ended (falling edge).");
   }
   lastPirState = pirState;
+
+  // Print motion status every 2 seconds
+  if (now - lastMotionStatusPrint >= 2000) {
+    lastMotionStatusPrint = now;
+    if (lastMotionMs == 0) {
+      Serial.println("PIR Status: No motion detected yet (inactive).");
+    } else {
+      unsigned long motionAgo = (now - lastMotionMs) / 1000;
+      if (motionAgo <= 10) {
+        Serial.print("PIR Status: Motion detected ");
+        Serial.print(motionAgo);
+        Serial.println(" seconds ago (ACTIVE - within 10 sec window).");
+      } else {
+        Serial.print("PIR Status: Last motion was ");
+        Serial.print(motionAgo);
+        Serial.println(" seconds ago (INACTIVE - outside 10 sec window).");
+      }
+    }
+  }
 
   // ---------- B) NFC PHONE DETECTION (continuous) ----------
   // Only try to read NFC if PN532 was successfully initialized
