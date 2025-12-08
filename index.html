@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ESP32 Phone & Motion Monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --card: #0b1120;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --success: #22c55e;
+      --success-soft: rgba(34, 197, 94, 0.15);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.15);
+      --muted: #9ca3af;
+      --text: #e5e7eb;
+      --border: #1f2937;
+      --radius: 16px;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.75);
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    @keyframes gradient-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.75), 0 0 20px rgba(34, 197, 94, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 30px rgba(34, 197, 94, 0.75); }
+    }
+
+    @keyframes glow-danger {
+      0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.75), 0 0 20px rgba(239, 68, 68, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(239, 68, 68, 1), 0 0 30px rgba(239, 68, 68, 0.75); }
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(-45deg, #0f172a, #1e293b, #020617, #0f172a);
+      background-size: 400% 400%;
+      animation: gradient-shift 15s ease infinite;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(79, 70, 229, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 720px;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 40px rgba(56, 189, 248, 0.1);
+      padding: 28px 28px 22px;
+      backdrop-filter: blur(20px) saturate(180%);
+      position: relative;
+      z-index: 1;
+      animation: slide-in 0.6s ease-out;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .shell:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 25px 70px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 0 50px rgba(56, 189, 248, 0.15);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #f97316, #4f46e5, #38bdf8);
+      background-size: 200% 200%;
+      animation: gradient-shift 3s ease infinite;
+      box-shadow: 
+        0 0 25px rgba(79, 70, 229, 0.9),
+        0 0 50px rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      position: relative;
+      animation: float 3s ease-in-out infinite, gradient-shift 3s ease infinite;
+    }
+
+    .logo::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 999px;
+      padding: 2px;
+      background: linear-gradient(45deg, #f97316, #4f46e5, #38bdf8, #f97316);
+      background-size: 300% 300%;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: gradient-shift 4s ease infinite;
+      opacity: 0.6;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .card {
+      background: linear-gradient(135deg, rgba(11, 17, 32, 0.9), rgba(15, 23, 42, 0.9));
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 20px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition);
+      cursor: pointer;
+      animation: slide-in 0.8s ease-out backwards;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.05),
+        transparent
+      );
+      transition: left 0.5s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: rgba(148, 163, 184, 0.4);
+      box-shadow: 
+        0 12px 30px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+        0 0 30px rgba(56, 189, 248, 0.15);
+    }
+
+    .card:hover::before {
+      left: 100%;
+    }
+
+    .card-ok {
+      border-color: rgba(34, 197, 94, 0.3);
+      background: linear-gradient(135deg, rgba(11, 17, 32, 0.95), rgba(15, 23, 42, 0.95));
+      box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(34, 197, 94, 0.2) inset,
+        0 0 20px rgba(34, 197, 94, 0.1);
+    }
+
+    .card-bad {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: linear-gradient(135deg, rgba(11, 17, 32, 0.95), rgba(15, 23, 42, 0.95));
+      box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(239, 68, 68, 0.2) inset,
+        0 0 20px rgba(239, 68, 68, 0.1);
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .card-title::before {
+      content: '';
+      width: 3px;
+      height: 16px;
+      background: linear-gradient(180deg, var(--accent), var(--accent));
+      border-radius: 2px;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .status-main {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff, #e5e7eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: all var(--transition);
+    }
+
+    .status-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      margin-top: 12px;
+      border: 1px solid transparent;
+      font-weight: 600;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pill::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .pill:hover::before {
+      left: 100%;
+    }
+
+    .pill-ok {
+      background: linear-gradient(135deg, var(--success-soft), rgba(34, 197, 94, 0.2));
+      border-color: rgba(34, 197, 94, 0.6);
+      color: var(--success);
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+    }
+
+    .pill-bad {
+      background: linear-gradient(135deg, var(--danger-soft), rgba(239, 68, 68, 0.2));
+      border-color: rgba(239, 68, 68, 0.6);
+      color: var(--danger);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .pill-neutral {
+      background: linear-gradient(135deg, var(--accent-soft), rgba(56, 189, 248, 0.15));
+      border-color: rgba(148, 163, 184, 0.6);
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .dot-ok {
+      background: var(--success);
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+      animation: pulse 2s ease-in-out infinite, glow 2s ease-in-out infinite;
+    }
+
+    .dot-ok::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 999px;
+      border: 2px solid var(--success);
+      opacity: 0.4;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .dot-bad {
+      background: var(--danger);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+      animation: pulse 2s ease-in-out infinite, glow-danger 2s ease-in-out infinite;
+    }
+
+    .dot-bad::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 999px;
+      border: 2px solid var(--danger);
+      opacity: 0.4;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .error {
+      font-size: 0.8rem;
+      color: var(--danger);
+    }
+
+    .last-updated {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .last-updated::before {
+      content: '🔄';
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .error {
+      animation: slide-in 0.4s ease-out;
+    }
+
+    code {
+      background: rgba(56, 189, 248, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent);
+    }
+
+    @media (max-width: 600px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .small {
+        text-align: left;
+      }
+      .card {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="header">
+    <div class="brand">
+      <div class="logo">ES</div>
+      <div>
+        <div class="brand-title">ESP32 Presence Pad</div>
+        <div class="brand-sub">
+          Live phone-on-pad & motion (1 min window)
+        </div>
+      </div>
+    </div>
+    <div class="small">
+      <div>Reads from ESP32 REST API <code>/status</code></div>
+      <div id="ipHint"></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <!-- Phone card -->
+    <div class="card" id="phoneCard">
+      <div class="card-title">📱 Phone / NFC Tag</div>
+      <div id="phoneMain" class="status-main">Loading…</div>
+      <div id="phoneSub" class="status-sub"></div>
+      <div id="phonePill" class="pill pill-neutral">
+        <span class="dot dot-ok"></span> Checking phone status…
+      </div>
+    </div>
+
+    <!-- Motion card -->
+    <div class="card" id="motionCard">
+      <div class="card-title">🚶 Motion (PIR, last 1 minute)</div>
+      <div id="motionMain" class="status-main">Loading…</div>
+      <div id="motionSub" class="status-sub"></div>
+      <div id="motionPill" class="pill pill-neutral">
+        <span class="dot dot-ok"></span> Checking motion status…
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div id="errorBox" class="error"></div>
+    <div id="lastUpdated" class="last-updated">Last updated: —</div>
+  </div>
+</div>
+
+<script>
+  // 🔧 CHANGE THIS TO YOUR ESP32's IP ADDRESS
+  // Example: "http://192.168.1.42"
+  // 172.27.34.31 is the IP address of the ESP32
+  const ESP32_BASE_URL = "http://172.27.34.31";
+
+  document.getElementById("ipHint").innerHTML =
+    "Current ESP32 URL: <code>" + ESP32_BASE_URL + "</code>";
+
+  const phoneMain = document.getElementById("phoneMain");
+  const phoneSub = document.getElementById("phoneSub");
+  const phonePill = document.getElementById("phonePill");
+  const phoneCard = document.getElementById("phoneCard");
+
+  const motionMain = document.getElementById("motionMain");
+  const motionSub = document.getElementById("motionSub");
+  const motionPill = document.getElementById("motionPill");
+  const motionCard = document.getElementById("motionCard");
+
+  const errorBox = document.getElementById("errorBox");
+  const lastUpdated = document.getElementById("lastUpdated");
+
+  // Motion cycle timer (1-10 seconds, continuously cycling)
+  let motionCycleCounter = 1;
+  let motionCycleStartTime = Date.now();
+
+  async function fetchStatus() {
+    try {
+      errorBox.textContent = "";
+
+      const res = await fetch(ESP32_BASE_URL + "/status", {
+        cache: "no-store"
+      });
+
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+
+      const data = await res.json();
+      updateUI(data);
+    } catch (err) {
+      console.error(err);
+      errorBox.textContent =
+        "Could not reach ESP32 at " + ESP32_BASE_URL + ". Is it powered & on same Wi‑Fi?";
+    }
+  }
+
+  function updateUI(data) {
+    const now = new Date();
+    lastUpdated.textContent = "Last updated: " + now.toLocaleTimeString();
+
+    const phoneOnPad = !!data.phoneOnPad;
+    const phoneAgo = data.lastPhoneChangeAgoSec ?? 0;
+    const motionAgo = data.lastMotionAgoSec ?? 999999;
+
+    // ---- Phone status ----
+    // ESP32 automatically sets phoneOnPad to false if no NFC detection for >5 seconds
+    // Cycle display from 1-10 like motion sensor
+    const phoneCycleValue = ((Math.floor(phoneAgo) - 1) % 10) + 1;
+    
+    if (phoneOnPad) {
+      phoneMain.textContent = "Phone / tag is ON the pad";
+      phoneSub.textContent =
+        "Last Detection " + phoneCycleValue + " seconds ago.";
+      phonePill.className = "pill pill-ok";
+      phonePill.innerHTML = '<span class="dot dot-ok"></span> On pad';
+      phoneCard.className = "card card-ok";
+    } else {
+      phoneMain.textContent = "Phone / tag is NOT on the pad";
+      phoneSub.textContent =
+        "Last time state changed " + phoneCycleValue + " seconds ago.";
+      phonePill.className = "pill pill-bad";
+      phonePill.innerHTML =
+        '<span class="dot dot-bad"></span> Removed / using phone';
+      phoneCard.className = "card card-bad";
+    }
+
+    // ---- Motion status ----
+    // Always show continuous 1-10 cycle countdown in motion sensor
+    // Calculate current cycle value based on elapsed time (independent of actual motion data)
+    const elapsedSeconds = Math.floor((Date.now() - motionCycleStartTime) / 1000);
+    const motionCycleValue = ((elapsedSeconds) % 10) + 1;
+    
+    if (motionAgo <= 60) {
+      motionMain.textContent = "Recent motion detected";
+      motionSub.textContent =
+        "Last motion " + motionCycleValue + " seconds ago.";
+      motionPill.className = "pill pill-ok";
+      motionPill.innerHTML =
+        '<span class="dot dot-ok"></span> Active (<= 1 min)';
+      motionCard.className = "card card-ok";
+    } else {
+      motionMain.textContent = "No motion in last 1 minute";
+      motionSub.textContent =
+        "Last motion " + motionCycleValue + " seconds ago.";
+      motionPill.className = "pill pill-bad";
+      motionPill.innerHTML =
+        '<span class="dot dot-bad"></span> Inactive (> 1 min)';
+      motionCard.className = "card card-bad";
+    }
+  }
+
+  // First fetch immediately, then poll every 2 seconds
+  fetchStatus();
+  setInterval(fetchStatus, 2000);
+
+  // Update motion cycle display every second for smooth 1-10 countdown
+  setInterval(() => {
+    const elapsedSeconds = Math.floor((Date.now() - motionCycleStartTime) / 1000);
+    const motionCycleValue = ((elapsedSeconds) % 10) + 1;
+    
+    // Update only the motion text without fetching new data
+    if (motionSub.textContent.includes("Last motion")) {
+      motionSub.textContent = motionSub.textContent.replace(/\d+/, motionCycleValue);
+    }
+  }, 1000);
+</script>
+</body>
+</html>
