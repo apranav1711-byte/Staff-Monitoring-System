@@ -154,14 +154,11 @@ void loop() {
   static unsigned long lastMotionStatusPrint = 0;
   bool pirState = digitalRead(PIR_PIN);
 
-  if (pirState == HIGH) {
-    // Motion detected - update timestamp whenever PIR is HIGH
-    // This ensures continuous monitoring, not just on rising edge
-    if (lastPirState == LOW) {
-      // Rising edge - new motion detected
-      Serial.println("PIR: Motion detected (rising edge).");
-    }
-    lastMotionMs = now;  // Update timestamp whenever motion is present
+  // Only update timestamp on rising edge (when motion first detected)
+  if (pirState == HIGH && lastPirState == LOW) {
+    // Rising edge - new motion detected
+    lastMotionMs = now;
+    Serial.println("PIR: Motion detected (rising edge).");
   } else if (pirState == LOW && lastPirState == HIGH) {
     // Falling edge - motion stopped
     Serial.println("PIR: Motion ended (falling edge).");
@@ -171,8 +168,11 @@ void loop() {
   // Print motion status every 2 seconds
   if (now - lastMotionStatusPrint >= 2000) {
     lastMotionStatusPrint = now;
+    Serial.print("PIR Pin State: ");
+    Serial.println(pirState == HIGH ? "HIGH" : "LOW");
+    
     if (lastMotionMs == 0) {
-      Serial.println("PIR Status: No motion detected yet (inactive).");
+      Serial.println("PIR Status: No motion detected yet (INACTIVE).");
     } else {
       unsigned long motionAgo = (now - lastMotionMs) / 1000;
       if (motionAgo <= 10) {
