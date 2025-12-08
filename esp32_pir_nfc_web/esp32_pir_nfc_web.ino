@@ -79,9 +79,20 @@ void setup() {
 
   // PIR - use INPUT (PIR sensors have their own output, no need for pull-up/pull-down)
   pinMode(PIR_PIN, INPUT);
-  Serial.println("PIR sensor initialized. Waiting for sensor to stabilize (30 seconds)...");
-  delay(30000);  // PIR sensors need warm-up time
-  Serial.println("PIR sensor ready!");
+  Serial.println("PIR sensor initialized on GPIO33. Waiting for sensor to stabilize...");
+  
+  // Check initial pin state
+  int initialPinState = digitalRead(PIR_PIN);
+  Serial.print("Initial PIR pin state: ");
+  Serial.println(initialPinState == HIGH ? "HIGH" : "LOW");
+  
+  delay(10000);  // 10 second warm-up (reduced from 30)
+  Serial.println("PIR sensor ready! Start testing motion detection.");
+  
+  // Check pin state after warm-up
+  int warmupPinState = digitalRead(PIR_PIN);
+  Serial.print("PIR pin state after warm-up: ");
+  Serial.println(warmupPinState == HIGH ? "HIGH" : "LOW");
 
   // WiFi
   setupWiFi();
@@ -155,37 +166,49 @@ void loop() {
   // ---------- A) PIR MOTION (independent) ----------
   static bool lastPirState = LOW;
   static unsigned long lastMotionStatusPrint = 0;
+  static unsigned long lastPinChangePrint = 0;
   bool pirState = digitalRead(PIR_PIN);
+
+  // Print pin state change immediately for debugging
+  if (pirState != lastPirState) {
+    Serial.print("[PIN CHANGE] PIR Pin changed from ");
+    Serial.print(lastPirState == HIGH ? "HIGH" : "LOW");
+    Serial.print(" to ");
+    Serial.println(pirState == HIGH ? "HIGH" : "LOW");
+    lastPinChangePrint = now;
+  }
 
   // Update timestamp ONLY on rising edge (when motion first detected)
   if (pirState == HIGH && lastPirState == LOW) {
     // Rising edge - new motion detected
     lastMotionMs = now;
-    Serial.print("PIR: Motion detected! Timestamp updated at ");
+    Serial.print(">>> PIR MOTION DETECTED! Timestamp updated at ");
     Serial.print(now);
     Serial.println(" ms");
   } else if (pirState == LOW && lastPirState == HIGH) {
     // Falling edge - motion stopped
-    Serial.println("PIR: Motion ended (falling edge).");
+    Serial.println(">>> PIR Motion ended (falling edge).");
   }
   lastPirState = pirState;
 
   // Print motion status every 2 seconds
   if (now - lastMotionStatusPrint >= 2000) {
     lastMotionStatusPrint = now;
-    Serial.print("PIR Pin State: ");
-    Serial.println(pirState == HIGH ? "HIGH" : "LOW");
+    Serial.print("--- PIR Pin State: ");
+    Serial.print(pirState == HIGH ? "HIGH" : "LOW");
+    Serial.print(" | GPIO33 = ");
+    Serial.println(pirState);
     
     if (lastMotionMs == 0) {
-      Serial.println("PIR Status: No motion detected yet (INACTIVE).");
+      Serial.println("--- PIR Status: No motion detected yet (INACTIVE).");
     } else {
       unsigned long motionAgo = (now - lastMotionMs) / 1000;
       if (motionAgo <= 10) {
-        Serial.print("PIR Status: Motion detected ");
+        Serial.print("--- PIR Status: Motion detected ");
         Serial.print(motionAgo);
         Serial.println(" seconds ago (ACTIVE - within 10 sec window).");
       } else {
-        Serial.print("PIR Status: Last motion was ");
+        Serial.print("--- PIR Status: Last motion was ");
         Serial.print(motionAgo);
         Serial.println(" seconds ago (INACTIVE - outside 10 sec window).");
       }
