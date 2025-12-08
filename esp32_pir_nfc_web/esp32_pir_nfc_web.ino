@@ -147,6 +147,8 @@ void setup() {
   lastMotionMs = 0; // start with no motion (inactive)
 
   // Web server routes
+  // hello world nothing just checking something is working or not
+  // hello world nothing just checking something is working or not
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/", HTTP_GET, []() {
     server.sendHeader("Access-Control-Allow-Origin", "*");
