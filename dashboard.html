@@ -592,6 +592,7 @@
     const motionCycleValue = ((elapsedSeconds) % 10) + 1;
     
     // Update only the motion text without fetching new data
+    // hello world nothing just checking something is working or not
     if (motionSub.textContent.includes("Last motion")) {
       motionSub.textContent = motionSub.textContent.replace(/\d+/, motionCycleValue);
     }
