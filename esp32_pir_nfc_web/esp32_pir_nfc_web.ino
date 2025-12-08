@@ -77,8 +77,8 @@ void setup() {
 
   Serial.println("\n=== ESP32 PIR + NFC + Web API ===");
 
-  // PIR - use INPUT_PULLDOWN for better signal stability
-  pinMode(PIR_PIN, INPUT_PULLDOWN);
+  // PIR - use INPUT (PIR sensors have their own output, no need for pull-up/pull-down)
+  pinMode(PIR_PIN, INPUT);
   Serial.println("PIR sensor initialized. Waiting for sensor to stabilize (30 seconds)...");
   delay(30000);  // PIR sensors need warm-up time
   Serial.println("PIR sensor ready!");
@@ -157,21 +157,13 @@ void loop() {
   static unsigned long lastMotionStatusPrint = 0;
   bool pirState = digitalRead(PIR_PIN);
 
-  // Update timestamp when motion is detected (on rising edge OR when continuously HIGH)
-  if (pirState == HIGH) {
-    if (lastPirState == LOW) {
-      // Rising edge - new motion detected
-      lastMotionMs = now;
-      Serial.print("PIR: Motion detected! Timestamp updated at ");
-      Serial.print(now);
-      Serial.println(" ms");
-    } else {
-      // Motion is still present - update timestamp to keep it active
-      // This handles continuous motion detection
-      if ((now - lastMotionMs) > 1000) {  // Update every second while motion is present
-        lastMotionMs = now;
-      }
-    }
+  // Update timestamp ONLY on rising edge (when motion first detected)
+  if (pirState == HIGH && lastPirState == LOW) {
+    // Rising edge - new motion detected
+    lastMotionMs = now;
+    Serial.print("PIR: Motion detected! Timestamp updated at ");
+    Serial.print(now);
+    Serial.println(" ms");
   } else if (pirState == LOW && lastPirState == HIGH) {
     // Falling edge - motion stopped
     Serial.println("PIR: Motion ended (falling edge).");
