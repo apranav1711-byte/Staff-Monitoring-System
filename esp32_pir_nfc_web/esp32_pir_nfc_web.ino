@@ -7,6 +7,14 @@
 const char* WIFI_SSID = "Pi(10)";
 const char* WIFI_PASS = "3141592653";
 
+// Force a static IP so you always hit the same address.
+// Adjust these if your LAN uses a different subnet.
+// Updated for your 10.244.230.x network (gateway 10.244.230.84).
+const IPAddress STATIC_IP(10, 244, 230, 50);
+const IPAddress GATEWAY_IP(10, 244, 230, 84);
+const IPAddress SUBNET_MASK(255, 255, 255, 0);
+const IPAddress DNS_IP(8, 8, 8, 8);
+
 // ---------- PIN CONFIG ----------
 #define PIR_PIN       33        // PIR OUT pin
 #define PN532_IRQ     4         // any free GPIO (required by library)
@@ -59,6 +67,12 @@ void setupWiFi() {
   Serial.println(WIFI_SSID);
 
   WiFi.mode(WIFI_STA);
+
+  // Apply static network settings before connecting.
+  if (!WiFi.config(STATIC_IP, GATEWAY_IP, SUBNET_MASK, DNS_IP)) {
+    Serial.println("Failed to configure static IP (WiFi.config).");
+  }
+
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   while (WiFi.status() != WL_CONNECTED) {
