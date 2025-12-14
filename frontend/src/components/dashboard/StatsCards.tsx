@@ -6,6 +6,8 @@ interface StatsCardsProps {
     totalStaff: number;
     presentStaff: number;
     workingStaff: number;
+    idleStaff: number;
+    notWorkingStaff: number;
     absentStaff: number;
     todayScans: number;
     todayMotions: number;
@@ -17,36 +19,36 @@ const statItems = [
     key: 'presentStaff',
     label: 'Present',
     icon: UserCheck,
-    color: 'text-success',
-    bgColor: 'bg-success/10',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
   },
   {
     key: 'workingStaff',
     label: 'Working',
     icon: Briefcase,
-    color: 'text-primary',
-    bgColor: 'bg-primary/10',
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
   },
   {
-    key: 'absentStaff',
-    label: 'Absent',
+    key: 'idleStaff',
+    label: 'Idle',
+    icon: Activity,
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500/10',
+  },
+  {
+    key: 'notWorkingStaff', // Maps to absent/not working
+    label: 'Not Working',
     icon: AlertCircle,
-    color: 'text-destructive',
-    bgColor: 'bg-destructive/10',
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
   },
   {
     key: 'todayScans',
     label: 'NFC Scans',
     icon: Nfc,
-    color: 'text-accent',
-    bgColor: 'bg-accent/10',
-  },
-  {
-    key: 'todayMotions',
-    label: 'Motions',
-    icon: Activity,
-    color: 'text-primary',
-    bgColor: 'bg-primary/10',
+    color: 'text-purple-500',
+    bgColor: 'bg-purple-500/10',
   },
 ];
 

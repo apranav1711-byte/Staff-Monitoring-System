@@ -7,6 +7,9 @@ import Index from "./pages/Index";
 import Staff from "./pages/Staff";
 import StaffDetail from "./pages/StaffDetail";
 import Logs from "./pages/Logs";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
+import Simulation from "./pages/Simulation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +25,9 @@ const App = () => (
           <Route path="/staff" element={<Staff />} />
           <Route path="/staff/:id" element={<StaffDetail />} />
           <Route path="/logs" element={<Logs />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/simulation" element={<Simulation />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

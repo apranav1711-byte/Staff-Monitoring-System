@@ -18,7 +18,7 @@ export const RoomActivityPanel = ({ rooms }: RoomActivityPanelProps) => {
             <Activity className="w-6 h-6 text-accent" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">Room Activity</h3>
+            <h3 className="text-lg font-semibold text-foreground">Desktop Activity</h3>
             <p className="text-sm text-muted-foreground">PIR Motion Detection</p>
           </div>
         </div>

@@ -12,6 +12,12 @@ const statusColors: Record<string, string> = {
   'Started Work': 'bg-primary/20 text-primary border-primary/30',
   'Break': 'bg-warning/20 text-warning border-warning/30',
   'Logged Out': 'bg-muted text-muted-foreground border-muted-foreground/30',
+  // New statuses
+  'Working': 'bg-green-500/20 text-green-500 border-green-500/30',
+  'Idle': 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
+  'Absent': 'bg-red-500/20 text-red-500 border-red-500/30',
+  'Present': 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+  'Not Working': 'bg-red-500/20 text-red-500 border-red-500/30',
 };
 
 export const LiveNFCScan = ({ scan }: LiveNFCScanProps) => {
@@ -19,7 +25,7 @@ export const LiveNFCScan = ({ scan }: LiveNFCScanProps) => {
     <div className="glass-card gradient-border p-6 relative overflow-hidden">
       {/* Animated background glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-      
+
       {/* Pulse effect */}
       <motion.div
         className="absolute top-4 right-4 w-3 h-3 rounded-full bg-primary"

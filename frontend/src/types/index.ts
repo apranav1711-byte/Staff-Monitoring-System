@@ -6,7 +6,7 @@ export interface Staff {
   email: string;
   phone: string;
   avatar: string;
-  status: 'present' | 'absent' | 'working';
+  status: 'present' | 'absent' | 'working' | 'idle' | 'not_working';
   lastNFCScan: string | null;
   motionActivity: boolean;
   totalWorkingTime: string;
@@ -17,7 +17,7 @@ export interface NFCScanEvent {
   staff_id: string;
   staff_name: string;
   timestamp: string;
-  status: 'Logged In' | 'Started Work' | 'Break' | 'Logged Out';
+  status: 'Logged In' | 'Started Work' | 'Break' | 'Logged Out' | 'Working' | 'Idle' | 'Absent' | 'Present' | 'Not Working';
 }
 
 export interface MotionEvent {

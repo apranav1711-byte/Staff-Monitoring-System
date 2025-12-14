@@ -8,11 +8,10 @@ const char* WIFI_SSID = "Pi(10)";
 const char* WIFI_PASS = "3141592653";
 
 // Force a static IP so you always hit the same address.
-// Adjust these if your LAN uses a different subnet.
-// Updated for your 10.244.230.x network (gateway 10.244.230.84).
-const IPAddress STATIC_IP(10, 244, 230, 50);
-const IPAddress GATEWAY_IP(10, 244, 230, 84);
-const IPAddress SUBNET_MASK(255, 255, 255, 0);
+// Updated for your 10.208.80.x network (Gateway: 10.208.80.31)
+const IPAddress STATIC_IP(10, 208, 80, 200);      // New Static IP
+const IPAddress GATEWAY_IP(10, 208, 80, 31);      // Your Router's Gateway
+const IPAddress SUBNET_MASK(255, 255, 255, 0);    // Standard Subnet
 const IPAddress DNS_IP(8, 8, 8, 8);
 
 // ---------- PIN CONFIG ----------
@@ -39,6 +38,11 @@ bool nfcInitialized = false;  // Track if PN532 was successfully initialized
 
 // ---------- HTTP HANDLER ----------
 void handleStatus() {
+  Serial.println(">>> Received GET request on /status");
+  IPAddress clientIP = server.client().remoteIP();
+  Serial.print(">>> Client IP: ");
+  Serial.println(clientIP);
+  
   unsigned long now = millis();
 
   unsigned long phoneAgo = (lastPhoneChangeMs == 0)
@@ -69,20 +73,59 @@ void setupWiFi() {
   WiFi.mode(WIFI_STA);
 
   // Apply static network settings before connecting.
+  // STATIC IP CONFIGURATION (Updated to match your 10.208.80.x network)
   if (!WiFi.config(STATIC_IP, GATEWAY_IP, SUBNET_MASK, DNS_IP)) {
-    Serial.println("Failed to configure static IP (WiFi.config).");
+    Serial.println("WARNING: Failed to configure static IP (WiFi.config).");
+    Serial.println("ESP32 will use DHCP instead. Check your network settings!");
+  } else {
+    Serial.println("Static IP configuration applied successfully.");
+    Serial.print("Configured IP: ");
+    Serial.println(STATIC_IP);
   }
 
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  int attempts = 0;
+  const int maxAttempts = 50; // 20 seconds max (50 * 400ms)
+  
+  while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts) {
     delay(400);
     Serial.print(".");
+    attempts++;
   }
+  
   Serial.println();
+  
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("ERROR: Failed to connect to WiFi!");
+    Serial.println("Check your SSID and password.");
+    return;
+  }
+  
   Serial.println("WiFi connected!");
-  Serial.print("ESP32 IP: ");
-  Serial.println(WiFi.localIP());
+  Serial.print("ESP32 IP Address: ");
+  IPAddress actualIP = WiFi.localIP();
+  Serial.println(actualIP);
+  
+  // Verify if static IP was actually applied
+  if (actualIP != STATIC_IP) {
+    Serial.println("⚠️ WARNING: Static IP was NOT applied!");
+    Serial.print("Expected IP: ");
+    Serial.println(STATIC_IP);
+    Serial.print("Actual IP (from DHCP): ");
+    Serial.println(actualIP);
+    Serial.println("Frontend should connect to the ACTUAL IP shown above!");
+  } else {
+    Serial.println("✓ Static IP confirmed: matches configured IP");
+  }
+  
+  Serial.print("Gateway: ");
+  Serial.println(WiFi.gatewayIP());
+  Serial.print("Subnet Mask: ");
+  Serial.println(WiFi.subnetMask());
+  Serial.print("RSSI (Signal Strength): ");
+  Serial.print(WiFi.RSSI());
+  Serial.println(" dBm");
 }
 
 void setup() {
@@ -161,17 +204,43 @@ void setup() {
   lastMotionMs = 0; // start with no motion (inactive)
 
   // Web server routes
-  // hello world nothing just checking something is working or not
-  // hello world nothing just checking something is working or not
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/", HTTP_GET, []() {
+    Serial.println(">>> Received GET request on /");
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.send(200, "text/plain",
                 "ESP32 PIR + NFC Status API. Use /status endpoint.");
   });
+  
+  // Add a simple test endpoint for debugging
+  server.on("/test", HTTP_GET, []() {
+    Serial.println(">>> Received GET request on /test");
+    IPAddress clientIP = server.client().remoteIP();
+    Serial.print(">>> Client IP: ");
+    Serial.println(clientIP);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    String response = "ESP32 is reachable! Server time: " + String(millis()) + "ms";
+    server.send(200, "text/plain", response);
+  });
+  
+  // Add a 404 handler to log all requests
+  server.onNotFound([]() {
+    Serial.print(">>> Received request for unknown path: ");
+    Serial.println(server.uri());
+    IPAddress clientIP = server.client().remoteIP();
+    Serial.print(">>> Client IP: ");
+    Serial.println(clientIP);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(404, "text/plain", "Not Found");
+  });
 
   server.begin();
-  Serial.println("HTTP server started.");
+  Serial.println("HTTP server started on port 80.");
+  Serial.println("Server is ready to accept connections.");
+  Serial.println("Test endpoints:");
+  Serial.println("  - http://" + WiFi.localIP().toString() + "/");
+  Serial.println("  - http://" + WiFi.localIP().toString() + "/test");
+  Serial.println("  - http://" + WiFi.localIP().toString() + "/status");
 }
 
 void loop() {

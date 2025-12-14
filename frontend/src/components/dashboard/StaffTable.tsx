@@ -19,9 +19,11 @@ interface StaffTableProps {
 }
 
 const statusConfig = {
-  present: { label: 'Present', color: 'bg-success/20 text-success border-success/30' },
-  absent: { label: 'Absent', color: 'bg-destructive/20 text-destructive border-destructive/30' },
-  working: { label: 'Working', color: 'bg-primary/20 text-primary border-primary/30' },
+  present: { label: 'Present', color: 'bg-blue-500/20 text-blue-500 border-blue-500/30' },
+  absent: { label: 'Not Working', color: 'bg-red-500/20 text-red-500 border-red-500/30' },
+  working: { label: 'Working', color: 'bg-green-500/20 text-green-500 border-green-500/30' },
+  idle: { label: 'Idle', color: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' },
+  not_working: { label: 'Not Working', color: 'bg-red-500/20 text-red-500 border-red-500/30' },
 };
 
 export const StaffTable = ({ staff, onSelectStaff, compact = false }: StaffTableProps) => {

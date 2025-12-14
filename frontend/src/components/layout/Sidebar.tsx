@@ -7,6 +7,8 @@ import {
   Wifi,
   Activity,
   AlertTriangle,
+  HelpCircle,
+  Bot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +20,8 @@ const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/staff', label: 'Staff', icon: Users },
   { path: '/logs', label: 'Activity Logs', icon: FileText },
+  { path: '/simulation', label: 'Simulation', icon: Bot },
+  { path: '/help', label: 'Help', icon: HelpCircle },
 ];
 
 export const Sidebar = ({ isOnline }: SidebarProps) => {
